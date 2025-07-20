@@ -108,7 +108,7 @@ file:///full/path/to/Dieting_App/index.html
 **Option 2**: Serve with Python for proper CORS handling:
 
 ```bash
-python app.py
+python3 app.py
 ```
 
 The Flask server will start at: [http://127.0.0.1:5000](http://127.0.0.1:5000)
