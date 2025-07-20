@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Diet Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+        form {
+            margin: 20px 0;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            margin-bottom: 10px;
+        }
+        input, select, textarea {
+            width: 200px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #weight-chart {
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Diet Tracker</h1>
+
+    <h2>Log Meal</h2>
+    <form id="meal-form">
+        <label>Date: <input type="date" id="meal-date" required></label><br>
+        <label>Meal: <input type="text" id="meal-name" required maxlength="100"></label><br>
+        <label>Calories: <input type="number" id="calories" min="0" step="any" required></label><br>
+        <label>Protein (g): <input type="number" id="protein" min="0" step="any" required></label><br>
+        <label>Carbs (g): <input type="number" id="carbs" min="0" step="any" required></label><br>
+        <label>Fat (g): <input type="number" id="fat" min="0" step="any" required></label><br>
+        <button type="submit">Log Meal</button>
+    </form>
+
+    <button id="load-sample">Load Sample Plan</button>
+
+    <h2>Log Weight</h2>
+    <form id="weight-form">
+        <label>Date: <input type="date" id="weight-date" required></label><br>
+        <label>Weight (lbs): <input type="number" id="weight-lbs" min="0" step="any" required></label><br>
+        <button type="submit">Log Weight</button>
+    </form>
+
+    <h2>View Today's Macros</h2>
+    <button id="view-macros">Show Today's Macros</button>
+    <pre id="macros-output"></pre>
+
+    <h2>Weight Progress Chart</h2>
+    <button id="view-chart">Show Chart</button>
+    <canvas id="weight-chart"></canvas>
+
+    <h2>Project Loss</h2>
+    <button id="project-loss">Calculate Projection</button>
+    <pre id="projection-output"></pre>
+
+    <h2>Generate Plan with Gemini AI (Free Tier)</h2>
+    <form id="plan-form">
+        <label>Plan Type: 
+            <select id="plan-type">
+                <option value="diet">Diet Plan</option>
+                <option value="exercise">Exercise Plan</option>
+                <option value="meal">Meal Plan</option>
+            </select>
+        </label><br>
+        <label>Custom Details: 
+            <textarea id="plan-details" placeholder="e.g., low-carb focus for 1500 calories daily, vegetarian options"></textarea>
+        </label><br>
+        <button type="submit">Generate Plan</button>
+    </form>
+    <pre id="plan-output"></pre>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api';
+
+        // Helper to get today's date in YYYY-MM-DD
+        function getToday() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // Set default dates
+        document.getElementById('meal-date').value = getToday();
+        document.getElementById('weight-date').value = getToday();
+
+        // Log Meal
+        document.getElementById('meal-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                date: document.getElementById('meal-date').value,
+                meal: document.getElementById('meal-name').value,
+                calories: parseFloat(document.getElementById('calories').value),
+                protein: parseFloat(document.getElementById('protein').value),
+                carbs: parseFloat(document.getElementById('carbs').value),
+                fat: parseFloat(document.getElementById('fat').value)
+            };
+            try {
+                const res = await fetch(`${API_URL}/meals`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                if (!res.ok) throw new Error((await res.json()).error);
+                alert('Meal logged!');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Load Sample
+        document.getElementById('load-sample').addEventListener('click', async () => {
+            try {
+                const res = await fetch(`${API_URL}/load_sample`, { method: 'POST' });
+                if (!res.ok) throw new Error((await res.json()).error);
+                alert('Sample loaded!');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Log Weight
+        document.getElementById('weight-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                date: document.getElementById('weight-date').value,
+                weight_lbs: parseFloat(document.getElementById('weight-lbs').value)
+            };
+            try {
+                const res = await fetch(`${API_URL}/weights`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                if (!res.ok) throw new Error((await res.json()).error);
+                alert('Weight logged!');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // View Macros
+        document.getElementById('view-macros').addEventListener('click', async () => {
+            try {
+                const res = await fetch(`${API_URL}/meals?date=${getToday()}`);
+                if (!res.ok) throw new Error((await res.json()).error);
+                const meals = await res.json();
+                let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+                meals.forEach(m => {
+                    totals.calories += m.calories;
+                    totals.protein += m.protein;
+                    totals.carbs += m.carbs;
+                    totals.fat += m.fat;
+                });
+                document.getElementById('macros-output').textContent = 
+                    `Calories: ${totals.calories}\nProtein: ${totals.protein}g\nCarbs: ${totals.carbs}g\nFat: ${totals.fat}g`;
+            } catch (error) {
+                document.getElementById('macros-output').textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // View Chart
+        let chart;
+        document.getElementById('view-chart').addEventListener('click', async () => {
+            try {
+                const res = await fetch(`${API_URL}/weights`);
+                if (!res.ok) throw new Error((await res.json()).error);
+                const weights = await res.json();
+                if (weights.length === 0) {
+                    alert('No weight data');
+                    return;
+                }
+                const labels = weights.map(w => w.date);
+                const data = weights.map(w => w.weight_lbs);
+
+                if (chart) chart.destroy();
+                chart = new Chart(document.getElementById('weight-chart'), {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Weight (lbs)',
+                            data,
+                            borderColor: 'blue',
+                            backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: { beginAtZero: false },
+                            x: { title: { display: true, text: 'Date' } }
+                        }
+                    }
+                });
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Project Loss
+        document.getElementById('project-loss').addEventListener('click', async () => {
+            try {
+                const res = await fetch(`${API_URL}/project_loss`);
+                if (!res.ok) throw new Error((await res.json()).error);
+                const proj = await res.json();
+                document.getElementById('projection-output').textContent = 
+                    `Weekly: ~${proj.weekly} lbs\nMonthly: ~${proj.monthly} lbs`;
+            } catch (error) {
+                document.getElementById('projection-output').textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // Generate Plan
+        document.getElementById('plan-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                type: document.getElementById('plan-type').value,
+                details: document.getElementById('plan-details').value
+            };
+            try {
+                const res = await fetch(`${API_URL}/generate_plan`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.error) throw new Error(result.error);
+                document.getElementById('plan-output').textContent = result.plan;
+            } catch (error) {
+                document.getElementById('plan-output').textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
