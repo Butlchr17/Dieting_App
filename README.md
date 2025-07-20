@@ -168,8 +168,7 @@ Then go to [http://127.0.0.1:8000/index.html](http://127.0.0.1:8000/index.html)
 
 ## License
 
-[Add your license here, e.g., MIT License]  
-*Specify if this is for open-source, academic, or private use.*
+License MIT License - feel free to use and modify.
 
 ---
 
