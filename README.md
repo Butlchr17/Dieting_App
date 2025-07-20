@@ -90,10 +90,10 @@ The `.env` file is already listed in `.gitignore`.
 With your virtual environment activated:
 
 ```bash
-python app.py
+python3 -m http.server 8000
 ```
 
-The Flask server will start at: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+Open http://127.0.0.1:8000/index.html in your browser. This ensures Fetch requests to http://127.0.0.1:5000/api/... work smoothly.
 
 ---
 
