@@ -1,3 +1,13 @@
+The provided README.md content is mostly well-structured but contains several formatting and content issues due to improper Markdown syntax and missing section headers. It also has some inconsistencies and incomplete instructions that need correction to align with your Dieting_App project setup (Flask with SQLite, Gemini API, and web UI). Below, I’ve refined and corrected the content into a single, properly formatted Markdown box, addressing these issues and ensuring clarity for users.
+
+Corrected README.md
+markdown
+
+Collapse
+
+Wrap
+
+Copy
 # Dieting_App
 
 A personal diet tracking application with a Flask-based RESTful API, SQLite database, and a simple web UI. The app allows users to log meals and weights, view nutritional macros, track weight progress with charts, project weight loss, and generate custom diet/exercise/meal plans using the Google Gemini AI API.
